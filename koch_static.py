@@ -4,20 +4,26 @@ import numpy as np
 class Koch(Scene):
     def construct(self):
         side_length = 10
-        max_depth = 5
+        max_depth = 3
+        linewidth = 3
 
         snowflakes = []
+        colored_snowflakes = []
         for depth in range(max_depth + 1):
             triangle = self.initial_triangle(side_length)
             points = self.koch_recursive(triangle, depth)
-            shape = VMobject(stroke_color="#AFCBCF", stroke_width=1)
+            shape = VMobject(stroke_color="#AFCBCF", stroke_width=linewidth)
+            colored_shape = VMobject(stroke_color="#E79E16", stroke_width=linewidth)
             shape.set_points_as_corners(points + [points[0]])
+            colored_shape.set_points_as_corners(points + [points[0]])
             snowflakes.append(shape)
+            colored_snowflakes.append(colored_shape)
 
-        current = snowflakes[-1]
+        current = colored_snowflakes[-1]
         self.play(Create(current))
+        if max_depth > 0:
+            self.play(Create(snowflakes[-2]))
         self.wait(1)
-
 
     def initial_triangle(self, side_length):
         height = side_length * np.sqrt(3) / 2
