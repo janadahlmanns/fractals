@@ -19,19 +19,28 @@ class Koch(Scene):
             snowflakes.append(shape)
             colored_snowflakes.append(colored_shape)
 
+
+        # Start with colored trianlge
         current = colored_snowflakes[0]
         self.play(Create(current))
-        self.wait(1)
+        self.wait(0.5)
 
-        for i in range(1, len(snowflakes)):
-            whited_current = snowflakes[i-1]
-            self.play(Transform(current, whited_current))
+        for i in range(len(snowflakes)):
+            white = snowflakes[i]
+            # Fade from colored (A) to white (B)
+            self.play(FadeOut(current), FadeIn(white))
+            current = white
             self.wait(0.5)
-            next_shape = colored_snowflakes[i]
-            self.play(Transform(current, next_shape))
-            self.wait(0.5)
+
+            # A: Overlay current white with next colored
+            if i + 1 < len(snowflakes):
+                colored = colored_snowflakes[i + 1]
+                overlaid = VGroup(colored, current.copy())
+                self.play(Transform(current, overlaid))
+                self.wait(0.2)
 
         self.wait(2)
+
 
     def initial_triangle(self, side_length):
         height = side_length * np.sqrt(3) / 2
