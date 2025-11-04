@@ -1,51 +1,45 @@
 from manim import *
 import numpy as np
 
-
-fps = 3
-duration = 2
-frames = fps * duration
-max_iter = 100
-
-
-# ---------- Config ----------
-config.pixel_width = 800      # quick test
+config.pixel_width = 800
 config.pixel_height = 800
 config.frame_width = 6
 config.frame_height = 6
-config.frame_rate = fps
 
-
-# initial full view 
-center0 = (0,0)
-width0 = 3.0
-
-# zoom target (Mandelbrot coords)
-target_center = (0.0, 1)
-target_width = 0.1
-
-
-# ---------- Scene ----------
 class MandelbrotZoom(Scene):
     def construct(self):
-        dot = Dot(color=RED, radius=0.1).move_to([target_center[0], target_center[1], 0])
-        self.add(dot)
+        res_x = 800
+        res_y = 800
+        framerate = 2
+        max_iter = 100
 
-        img = self.render_mandelbrot(center0, width0)
-        m = ImageMobject(img)
-        self.add(m)
+        center = (-0.5, -0.5)
+        n_frames = 10
+        start_zoom = 3.0
+        end_zoom = 1.0
+        zoom_factor = (end_zoom / start_zoom) ** (1 / (n_frames - 1))
 
+        prev_img = None
+        for i in range(n_frames):
+            zoom = start_zoom * (zoom_factor ** i) # exponential zoom
+            #zoom = start_zoom - i * ((start_zoom - end_zoom) / (n_frames - 1)) # linear zoom
+            image = self.generate_mandelbrot_image(center, res_x, res_y, zoom, max_iter)
+            img = ImageMobject(image).set(width=config.frame_width)
+            self.add(img)
+            self.wait(1 / framerate)
+            if prev_img:
+                self.remove(prev_img)
+            prev_img = img
 
-    def render_mandelbrot(center, width, height_px=2160, width_px=2160, max_iter=100):
+    def generate_mandelbrot_image(self, center, res_x, res_y, zoom, max_iter=100):
+        x_center, y_center = center
 
-        cx, cy = center
-        half_w = width / 2
-        half_h = width / 2
+        x_min = x_center - (zoom / 2)
+        x_max = x_center + (zoom / 2)
+        y_min = y_center - (zoom / 2)
+        y_max = y_center + (zoom / 2)
 
-        x_min, x_max = cx - half_w, cx + half_w
-        y_min, y_max = cy - half_h, cy + half_h
-
-        image = np.zeros((height_px, width_px, 3), dtype=np.uint8)
+        image = np.zeros((res_y, res_x, 3), dtype=np.uint8)
 
         palette = [
             np.array([14, 64, 88]),
@@ -56,26 +50,32 @@ class MandelbrotZoom(Scene):
             np.array([158, 43, 53]),
         ]
 
-        for i in range(height_px):
-            for j in range(width_px):
-                # map pixel to complex plane
-                x = x_min + (j / width_px) * (x_max - x_min)
-                y = y_min + (i / height_px) * (y_max - y_min)
+        for i in range(res_y):
+            y = y_min + (i / (res_y - 1)) * (y_max - y_min)
+            for j in range(res_x):
+                x = x_min + (j / (res_x - 1)) * (x_max - x_min)
                 c = complex(x, y)
                 z = 0
                 n = 0
+
                 while abs(z) <= 2 and n < max_iter:
                     z = z * z + c
                     n += 1
 
-                if n == max_iter:
+                dist = np.sqrt((x + 0.5)**2 + (y + 0.5)**2)
+                if dist < 0.1:
+                    color = np.array([255, 0, 0])
+                elif n == max_iter:
                     color = np.array([0, 0, 0])
                 else:
                     smooth = n + 1 - np.log(np.log2(abs(z)))
                     t = smooth / max_iter * (len(palette) - 1)
-                    idx, frac = int(t), t - int(t)
-                    color = ((1 - frac) * palette[idx]
-                            + frac * palette[min(idx + 1, len(palette) - 1)])
+                    idx = int(t)
+                    frac = t - idx
+                    color = (
+                        (1 - frac) * palette[idx] + frac * palette[min(idx + 1, len(palette) - 1)]
+                    )
+
                 image[i, j] = np.clip(color, 0, 255)
 
         return image

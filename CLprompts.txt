@@ -8,6 +8,9 @@ ffmpeg -i media/videos/lorenz/600p50/Lorenz.mp4 -vf "fps=30,scale=600:-1:flags=l
 
  manim -pql lotka_volterra/lvanimation.py LVAnimation
 
+
+    manim -pql filename.py --flush_cache
+
  my colors:
  black #000000
  dark blue #0E4058
