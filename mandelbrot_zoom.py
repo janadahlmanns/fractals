@@ -10,13 +10,13 @@ class MandelbrotZoom(Scene):
     def construct(self):
         res_x = 800
         res_y = 800
-        framerate = 2
+        framerate = 8
         max_iter = 100
 
-        center = (-0.5, -0.5)
-        n_frames = 10
+        center = (-0.5255, -0.525)
+        n_frames = 160
         start_zoom = 3.0
-        end_zoom = 1.0
+        end_zoom = 0.0001
         zoom_factor = (end_zoom / start_zoom) ** (1 / (n_frames - 1))
 
         prev_img = None
@@ -30,6 +30,7 @@ class MandelbrotZoom(Scene):
             if prev_img:
                 self.remove(prev_img)
             prev_img = img
+
 
     def generate_mandelbrot_image(self, center, res_x, res_y, zoom, max_iter=100):
         x_center, y_center = center
@@ -62,10 +63,7 @@ class MandelbrotZoom(Scene):
                     z = z * z + c
                     n += 1
 
-                dist = np.sqrt((x + 0.5)**2 + (y + 0.5)**2)
-                if dist < 0.1:
-                    color = np.array([255, 0, 0])
-                elif n == max_iter:
+                if n == max_iter:
                     color = np.array([0, 0, 0])
                 else:
                     smooth = n + 1 - np.log(np.log2(abs(z)))
